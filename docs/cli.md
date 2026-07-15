@@ -82,6 +82,32 @@ cargo run --bin rustrum-cli -- encrypt [OPTIONS] --input <INPUT> --output <OUTPU
   - 若未启用，则生成单个连续的密文数据文件 `[name].rstr`。
 - `-t, --threads <THREADS>`: 限制并发加密时的线程数（默认使用 Rayon 自动管理的物理 CPU 核心数）。
 
+#### 为什么需要 FMP4 (Fragmented MP4) 格式？
+
+标准的 MP4 文件通常将媒体元数据（如 `moov` 盒，包含视频时长、音视频流索引、关键帧位置等）放置在文件头部或尾部。这种结构使得浏览器在通过媒体源扩展（MSE, Media Source Extensions）播放视频时，必须一次性获取完整的头部信息，甚至在执行拖动寻道时很难在未完全下载的情况下定位分片。
+
+FMP4（碎片化 MP4）将视频分割成了一系列独立的、自包含的媒体片段（每个片段包含一个 `moof` 索引盒和一个 `mdat` 数据盒）。这种特征使得 Rustrum 能够将每个天然的 FMP4 碎片作为独立的解密分块，在浏览器端实现按需 Range 加载和就地解密。
+
+#### 如何使用 FFmpeg 将普通视频转换为 FMP4 格式？
+
+如果您的源视频不是 FMP4 格式，在运行加密命令时会报错："输入视频不是 Fragmented MP4 (FMP4) 格式"。您可以使用 FFmpeg 工具进行转换：
+
+1. **仅转换容器封装（不进行音视频重编码，速度极快，适用于源视频本身为 H.264/AAC 编码的情况）**：
+   ```bash
+   ffmpeg -i input.mp4 -c copy -movflags empty_moov+omit_tfhd_offset+frag_keyframe+default_base_moof output.mp4
+   ```
+
+2. **重新编码为兼容性最佳的 H.264 + AAC 编码 FMP4**：
+   ```bash
+   ffmpeg -i input.mp4 -c:v libx264 -c:a aac -movflags empty_moov+omit_tfhd_offset+frag_keyframe+default_base_moof output.mp4
+   ```
+
+其中关键的 `-movflags` 参数说明：
+- `empty_moov`：创建一个空的 `moov` 头部，仅存放基础描述，不包含媒体数据的物理偏移量索引。
+- `omit_tfhd_offset`：在 `tfhd` 盒中省略基准数据偏移量，使分片位置不依赖外部绝对偏移，更加便于切片和解密。
+- `frag_keyframe`：强制在每个关键帧（I 帧）处切分出一个新的媒体碎片，确保每个片段都能作为独立的解密单位且可快速寻道。
+- `default_base_moof`：使用 `moof` 的起点作为数据引用的基准地址，保证播放器的兼容性。
+
 ---
 
 ### 2. 解密视频文件 (decrypt)

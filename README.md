@@ -128,6 +128,22 @@ cargo run --bin rustrum-cli -- encrypt \
 - `--split`: 是否启用独立物理分片存储。开启后会生成多个 `[name]_[index].rstr` 文件；默认不开启，生成单个密文数据文件 `[name].rstr`。
 - `-t, --threads`: 限制加密线程数。
 
+#### 视频源文件格式要求 (FMP4)
+
+Rustrum 要求输入的源视频文件必须为 **Fragmented MP4 (FMP4)** 格式。普通的 MP4 文件无法直接用于分片加密和流式播放。
+
+如果您的源视频文件是普通 MP4，请先使用 FFmpeg 转换为 FMP4。
+
+1. **仅转换容器封装（不进行重编码，速度极快，适用于源视频本身已是 H.264/AAC 编码）**：
+   ```bash
+   ffmpeg -i input.mp4 -c copy -movflags empty_moov+omit_tfhd_offset+frag_keyframe+default_base_moof output.mp4
+   ```
+
+2. **重新编码为兼容性最佳的 H.264 + AAC 编码 FMP4（推荐，能保证在大部分浏览器下正常解码播放）**：
+   ```bash
+   ffmpeg -i input.mp4 -c:v libx264 -c:a aac -movflags empty_moov+omit_tfhd_offset+frag_keyframe+default_base_moof output.mp4
+   ```
+
 ### 使用 CLI 解密视频
 
 可以使用解密子命令还原出原始视频以验证正确性：
