@@ -5,13 +5,37 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag to release (e.g., v1.0.0)'
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 jobs:
+  check-version:
+    name: Check Version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@main
+
+      - name: Check if version already exists
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          VERSION="${{ inputs.version }}"
+          echo "Checking if tag '$VERSION' already exists..."
+          if git ls-remote --tags origin | grep -q "refs/tags/${VERSION}$"; then
+            echo "Error: Tag '$VERSION' already exists in the repository!"
+            exit 1
+          fi
+          echo "Tag '$VERSION' does not exist. Proceeding..."
+
   build-cli:
     name: Build CLI for ${{ matrix.job.target }}
+    needs: check-version
     runs-on: ${{ matrix.job.os }}
     strategy:
       fail-fast: false
@@ -61,6 +85,7 @@ jobs:
 
   build-sdk:
     name: Build SDK and Pack
+    needs: check-version
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -125,8 +150,8 @@ jobs:
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
           files: |
             artifacts/*
         env:
@@ -134,6 +159,7 @@ jobs:
 
   build-docker:
     name: Build and Push Docker Image
+    needs: check-version
     runs-on: ubuntu-latest
     permissions:
       contents: read
