@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MPD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="urn:mpeg:dash:schema:mpd:2011"
+	xmlns:xlink="http://www.w3.org/1999/xlink"
+	xsi:schemaLocation="urn:mpeg:DASH:schema:MPD:2011 http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd"
+	profiles="urn:mpeg:dash:profile:isoff-live:2011"
+	type="static"
+	mediaPresentationDuration="PT52.2S"
+	maxSegmentDuration="PT5.0S"
+	minBufferTime="PT24.5S">
+	<ProgramInformation>
+		<Title>Sintel Trailer</Title>
+	</ProgramInformation>
+	<ServiceDescription id="0">
+	</ServiceDescription>
+	<Period id="0" start="PT0.0S">
+		<AdaptationSet id="0" contentType="video" startWithSAP="1" segmentAlignment="true" bitstreamSwitching="true" frameRate="24/1" maxWidth="854" maxHeight="480" par="427:240" lang="und">
+			<Representation id="0" mimeType="video/mp4" codecs="avc1.64001e" bandwidth="473349" width="854" height="480" sar="1:1">
+				<SegmentTemplate timescale="12288" initialization="data/init.m4s" media="data/chunk_$Number$.m4s" startNumber="1">
+					<SegmentTimeline>
+						<S t="1024" d="62976" />
+						<S d="84480" />
+						<S d="75264" />
+						<S d="69632" />
+						<S d="79872" />
+						<S d="151040" />
+						<S d="118272" />
+					</SegmentTimeline>
+				</SegmentTemplate>
+			</Representation>
+		</AdaptationSet>
+		<AdaptationSet id="1" contentType="audio" startWithSAP="1" segmentAlignment="true" bitstreamSwitching="true" lang="und">
+			<Representation id="1" mimeType="audio/mp4" codecs="mp4a.40.2" bandwidth="128660" audioSamplingRate="48000">
+				<AudioChannelConfiguration schemeIdUri="urn:mpeg:dash:23003:3:audio_channel_configuration:2011" value="2" />
+				<SegmentTemplate timescale="48000" initialization="data/init.m4s" media="data/chunk_$Number$.m4s" startNumber="1">
+					<SegmentTimeline>
+						<S t="0" d="240544" />
+						<S d="240640" r="8" />
+						<S d="91136" />
+					</SegmentTimeline>
+				</SegmentTemplate>
+			</Representation>
+		</AdaptationSet>
+	</Period>
+</MPD>

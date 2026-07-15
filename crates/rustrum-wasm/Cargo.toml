@@ -1,0 +1,15 @@
+[package]
+name = "rustrum-wasm"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+rustrum-core = { path = "../rustrum-core" }
+wasm-bindgen = "0.2"
+console_error_panic_hook = { version = "0.1.7", optional = true }
+
+[features]
+default = ["console_error_panic_hook"]

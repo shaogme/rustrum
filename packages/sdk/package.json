@@ -1,0 +1,28 @@
+{
+  "name": "rustrum-sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/rustrum-sdk.js",
+  "module": "./dist/rustrum-sdk.js",
+  "types": "./dist/rustrum-sdk.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/rustrum-sdk.d.ts",
+      "import": "./dist/rustrum-sdk.js"
+    },
+    "./pkg/*": "./dist/pkg/*"
+  },
+  "scripts": {
+    "build:wasm": "wasm-pack build ../../crates/rustrum-wasm --target web --out-dir ../../packages/sdk/src/pkg",
+    "build": "pnpm build:wasm && vite build && dts-bundle-generator -o dist/rustrum-sdk.d.ts src/index.ts --no-banner && node -e \"const fs = require('fs'); fs.mkdirSync('dist/pkg', { recursive: true }); fs.copyFileSync('src/pkg/rustrum_wasm_bg.wasm', 'dist/pkg/rustrum_wasm_bg.wasm'); fs.copyFileSync('src/pkg/rustrum_wasm.d.ts', 'dist/pkg/rustrum_wasm.d.ts'); fs.copyFileSync('src/pkg/rustrum_wasm.js', 'dist/pkg/rustrum_wasm.js');\""
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "dts-bundle-generator": "^9.5.1",
+    "typescript": "~6.0.2",
+    "vite": "^8.1.1"
+  }
+}

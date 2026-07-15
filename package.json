@@ -1,0 +1,12 @@
+{
+  "name": "rustrum-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm -r build",
+    "test": "pnpm --filter web-test test",
+    "build:wasm": "pnpm --filter rustrum-sdk build:wasm"
+  }
+}

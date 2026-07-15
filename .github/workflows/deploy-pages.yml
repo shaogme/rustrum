@@ -1,0 +1,68 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@main
+
+      - name: Install Rust toolchain (for wasm-pack)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install wasm-pack
+        uses: qmaru/wasm-pack-action@v0.6.0
+        with:
+          version: 'latest'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - name: Install Node.js
+        uses: actions/setup-node@main
+        with:
+          node-version: 23
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build SDK (includes WASM build)
+        run: pnpm --filter rustrum-sdk build
+
+      - name: Build Web Application
+        env:
+          BASE_URL: /rustrum/
+        run: pnpm --filter web build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@main
+
+      - name: Upload Artifacts
+        uses: actions/upload-pages-artifact@main
+        with:
+          path: 'packages/web/dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@main
