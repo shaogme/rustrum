@@ -4,6 +4,8 @@ Rustrum 是一款高性能、安全、端到端加密的视频流解决方案。
 
 Rustrum 的核心设计目标是在不可信的静态托管平台（如 GitHub Pages、Cloudflare Pages）上实现零知识 (Zero-Knowledge) 视频托管，同时保证流畅的、原生级别的播放体验（包括即时拖动寻道和低内存占用）。
 
+您可以通过 [GitHub Pages 在线演示页面](https://shaogme.github.io/rustrum/) 直接体验。该页面由 [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml) 持续集成自动构建并部署。
+
 ---
 
 ## 目录
