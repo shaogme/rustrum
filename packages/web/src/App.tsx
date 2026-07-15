@@ -103,19 +103,24 @@ export default function App() {
   // 加载默认示例文件
   const loadDefaultFiles = async () => {
     setIsLoadingFiles(true);
-    addLog('正在加载默认视频元数据 (fmp4.rstrm)...', 'info');
+    const baseUrl = import.meta.env.BASE_URL || '/';
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
+    const rstrmUrl = `${cleanBaseUrl}fmp4.rstrm`;
+    const rstrUrl = `${cleanBaseUrl}fmp4.rstr`;
+
+    addLog(`正在加载默认视频元数据 (${rstrmUrl})...`, 'info');
     try {
-      const rstrmRes = await fetch('/fmp4.rstrm');
+      const rstrmRes = await fetch(rstrmUrl);
       if (!rstrmRes.ok) {
         throw new Error('未找到预置的加密视频描述文件，请先使用 CLI 工具进行加密生成。');
       }
       const rstrmBuf = await rstrmRes.arrayBuffer();
 
-      setRstrSource({ type: 'url', url: '/fmp4.rstr' });
+      setRstrSource({ type: 'url', url: rstrUrl });
       setRstrmData(rstrmBuf);
       addLog(`加载默认元数据文件成功 (rstrm: ${rstrmBuf.byteLength} 字节)，视频源将按需发起 Range 请求。`, 'success');
 
-      await handleLoadAndPlay(rstrmBuf, '/fmp4.rstr', password);
+      await handleLoadAndPlay(rstrmBuf, rstrUrl, password);
     } catch (err: any) {
       addLog(`加载默认文件失败: ${err.message || err}`, 'error');
     } finally {
