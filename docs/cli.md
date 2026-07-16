@@ -54,6 +54,17 @@ cargo build --release --bin rustrum-cli
 docker run --rm -v $(pwd):/workspace -w /workspace ghcr.io/shaogme/rustrum:latest encrypt -i data/fmp4.mp4 -o web/public -p yourpassword
 ```
 
+### 4. 使用 GitHub Actions (CI/CD)
+
+如果您想在 GitHub Actions 工作流中安装并使用 `rustrum-cli`，可以使用本项目的自定义 Action：
+
+```yaml
+- name: Setup Rustrum CLI
+  uses: shaogme/rustrum@main # 或者指定特定的 release tag，例如 v1.0.0
+  with:
+    version: 'latest' # 可选，默认为 'latest'，也可以指定具体版本如 'v1.0.0'
+```
+
 ---
 
 ## 命令行使用说明

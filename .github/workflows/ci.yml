@@ -63,3 +63,24 @@ jobs:
 
       - name: Run Web Tests
         run: pnpm --filter web-test test
+
+  test-action:
+    name: Test Setup Action
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@main
+
+      - name: Test Local Setup Action (latest)
+        uses: ./
+        with:
+          version: 'latest'
+
+      - name: Verify CLI Installation
+        shell: bash
+        run: |
+          rustrum-cli --help
+

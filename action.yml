@@ -1,0 +1,110 @@
+name: 'Setup Rustrum CLI'
+description: 'Install the rustrum-cli binary from GitHub Releases'
+inputs:
+  version:
+    description: 'Version of rustrum-cli to install (e.g. v1.0.0). Defaults to latest.'
+    required: false
+    default: 'latest'
+runs:
+  using: 'composite'
+  steps:
+    - name: Get OS and Architecture
+      id: sys-info
+      shell: bash
+      run: |
+        OS=""
+        case "${{ runner.os }}" in
+          Linux)    OS="linux" ;;
+          macOS)    OS="macos" ;;
+          Windows)  OS="windows" ;;
+        esac
+        
+        ARCH=""
+        case "${{ runner.arch }}" in
+          X64)      ARCH="x64" ;;
+          ARM64)    ARCH="arm64" ;;
+        esac
+        
+        echo "os=$OS" >> $GITHUB_OUTPUT
+        echo "arch=$ARCH" >> $GITHUB_OUTPUT
+
+    - name: Download and Install
+      shell: bash
+      run: |
+        VERSION="${{ inputs.version }}"
+        REPO="shaogme/rustrum"
+        
+        if [ "$VERSION" = "latest" ]; then
+          API_URL="https://api.github.com/repos/${REPO}/releases/latest"
+          JSON_RESPONSE=$(curl -sSL -H "Accept: application/vnd.github+json" -H "User-Agent: setup-rustrum-cli-action" "$API_URL" || echo "")
+          TAG=$(echo "$JSON_RESPONSE" | tr ',' '\n' | grep '"tag_name":' | sed -E 's/.*"tag_name":\s*"(.*)".*/\1/' | tr -d '"' | tr -d ' ' || true)
+          
+          if [ -z "$TAG" ]; then
+            echo "Failed to fetch the latest release tag from API. Attempting fallback..."
+            REDIRECT_URL=$(curl -s -w "%{redirect_url}" -o /dev/null "https://github.com/${REPO}/releases/latest" || true)
+            TAG=$(echo "$REDIRECT_URL" | awk -F'/' '{print $NF}' || true)
+          fi
+          VERSION="$TAG"
+        fi
+        
+        # Ensure version is not empty
+        if [ -z "$VERSION" ]; then
+          echo "Error: Could not resolve latest version tag."
+          exit 1
+        fi
+        
+        # Ensure 'v' prefix if it starts with a number (POSIX compliant)
+        case "$VERSION" in
+          [0-9]*) VERSION="v$VERSION" ;;
+        esac
+        
+        OS="${{ steps.sys-info.outputs.os }}"
+        ARCH="${{ steps.sys-info.outputs.arch }}"
+        
+        FILENAME=""
+        if [ "$OS" = "linux" ]; then
+          FILENAME="rustrum-cli-linux.tar.gz"
+        elif [ "$OS" = "macos" ]; then
+          if [ "$ARCH" = "arm64" ]; then
+            FILENAME="rustrum-cli-macos-arm64.tar.gz"
+          else
+            FILENAME="rustrum-cli-macos-x64.tar.gz"
+          fi
+        elif [ "$OS" = "windows" ]; then
+          FILENAME="rustrum-cli-windows.zip"
+        fi
+        
+        echo "Resolved VERSION: $VERSION"
+        echo "Detected OS: $OS"
+        echo "Detected ARCH: $ARCH"
+        echo "Using FILENAME: $FILENAME"
+        
+        if [ -z "$FILENAME" ]; then
+          echo "Unsupported platform: $OS ($ARCH)"
+          exit 1
+        fi
+        
+        DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${VERSION}/${FILENAME}"
+        echo "Downloading from: $DOWNLOAD_URL"
+        
+        TEMP_DIR=$(mktemp -d)
+        
+        if ! curl -sSLf -o "${TEMP_DIR}/${FILENAME}" "${DOWNLOAD_URL}"; then
+          echo "Error: Failed to download release asset from $DOWNLOAD_URL"
+          exit 1
+        fi
+        
+        INSTALL_DIR="${HOME}/.rustrum/bin"
+        mkdir -p "${INSTALL_DIR}"
+        
+        if [[ "$FILENAME" == *.tar.gz ]]; then
+          tar -xzf "${TEMP_DIR}/${FILENAME}" -C "${INSTALL_DIR}"
+        elif [[ "$FILENAME" == *.zip ]]; then
+          unzip -q "${TEMP_DIR}/${FILENAME}" -d "${INSTALL_DIR}"
+        fi
+        
+        chmod +x "${INSTALL_DIR}/rustrum-cli" 2>/dev/null || true
+        chmod +x "${INSTALL_DIR}/rustrum-cli.exe" 2>/dev/null || true
+        
+        echo "${INSTALL_DIR}" >> $GITHUB_PATH
+        echo "Successfully installed rustrum-cli version $VERSION to $INSTALL_DIR"
